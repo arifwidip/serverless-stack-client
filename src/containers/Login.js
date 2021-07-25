@@ -1,13 +1,18 @@
 import React, { useState } from "react";
+import { useHistory } from "react-router-dom";
 import Form from "react-bootstrap/Form";
-import Button from "react-bootstrap/Button";
 import { Auth } from "aws-amplify";
+import LoaderButton from "../components/LoaderButton";
 import { useAppContext } from "../libs/contextLib";
+import { onError } from "../libs/errorLibs";
 import "./Login.css";
 
 export default function Login() {
+  const history = useHistory();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { userHasAuthenticated } = useAppContext();
 
   function validateForm() {
@@ -17,11 +22,15 @@ export default function Login() {
   async function handleSubmit(event) {
     event.preventDefault()
 
+    setIsLoading(true)
+
     try {
       await Auth.signIn(email, password);
       userHasAuthenticated(true);
+      history.push("/");
     } catch (e) {
-      alert(e.message);
+      onError(e);
+      setIsLoading(false)
     }
   }
 
@@ -45,9 +54,15 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
           />
         </Form.Group>
-        <Button block size="lg" type="submit" disabled={!validateForm()}>
+        <LoaderButton
+          block
+          size="lg"
+          type="submit"
+          isLoading={isLoading}
+          disabled={!validateForm()}
+        >
           Login
-        </Button>
+        </LoaderButton>
       </Form>
     </div>
   )
